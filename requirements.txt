@@ -7,5 +7,5 @@
 click==6.6                # via pip-tools
 first==2.0.1              # via pip-tools
 pip-tools==1.8.0
-pytz==2016.7
+pytz==2016.10
 six==1.10.0

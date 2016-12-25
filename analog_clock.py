@@ -3,6 +3,7 @@
 """
 アナログ時計
 """
+
 import codecs
 import datetime
 import math
@@ -16,15 +17,23 @@ class MainWindow(six.moves.tkinter.Tk):
     メインウィンドウ
     """
 
-    def __init__(self):
-        six.moves.tkinter.Tk.__init__(self)
+    def __init__(self, screenName=None, baseName=None, className='Tk', useTk=1, sync=0, use=None):
+        six.moves.tkinter.Tk.__init__(self, screenName, baseName, className, useTk, sync, use)
 
-        # ボタンフレーム (上部)
-        self._buttons = six.moves.tkinter.Frame(self)
+        # ヘッダーフレーム
+        self._header = six.moves.tkinter.Frame(self)
+        self._header.pack()
+
+        # ボタンフレーム
+        self._buttons = six.moves.tkinter.Frame(self._header)
         self._buttons.pack()
 
+        # 日付ラベル
+        self._date = DateLabel(self._header)
+        self._date.pack()
+
         # 時計
-        self._clock = Clock(self)
+        self._clock = Clock(self, self._date)
         self._clock.pack(expand=True, fill=six.moves.tkinter.BOTH)
 
         # タイムゾーン切り替えボタン
@@ -51,7 +60,7 @@ class MainWindow(six.moves.tkinter.Tk):
         clock_size = min(self._clock.winfo_width(), self._clock.winfo_height())
 
         # ウィンドウサイズを調整
-        self.geometry('{}x{}'.format(clock_size, clock_size + self._buttons.winfo_height()))
+        self.geometry('{}x{}'.format(clock_size, clock_size + self._header.winfo_height()))
 
 
 class TimeZone:
@@ -109,6 +118,22 @@ class TimezoneChangeButton(six.moves.tkinter.Button):
         self._clock.timezone(self._timezone.change())
 
 
+class DateLabel(six.moves.tkinter.Label):
+    """
+    日付ラベル
+    """
+
+    # 曜日一覧
+    _weekdays = ['日', '月', '火', '水', '木', '金', '土']
+
+    def set(self, now):
+        """
+        日付をセット
+        :param now: 今日の日付 (datetime)
+        """
+        self.configure(text='{} ({})'.format(now.strftime('%Y年%m月%d日'), self._weekdays[now.weekday()]))
+
+
 class Clock(six.moves.tkinter.Canvas):
     """
     時計
@@ -126,7 +151,7 @@ class Clock(six.moves.tkinter.Canvas):
     # 倍率
     _scale = 1
 
-    def __init__(self, master=None, window=None, cnf=None, **kw):
+    def __init__(self, master=None, date_label=None, cnf=None, **kw):
         if cnf is None:
             cnf = dict()
 
@@ -135,13 +160,8 @@ class Clock(six.moves.tkinter.Canvas):
         # サイズが変更されたとき、倍率をセットする
         self.bind('<Configure>', self._set_scale)
 
-        # メインウィンドウ
-        if window:
-            self._window = window
-        elif master:
-            self._window = master
-        else:
-            self._window = None
+        # 日付ラベル
+        self._date = date_label
 
     def timezone(self, timezone):
         """
@@ -149,7 +169,7 @@ class Clock(six.moves.tkinter.Canvas):
         :param timezone: タイムゾーン
         """
         self._timezone = timezone
-        self._window.title(self._timezone)
+        self.master.title(self._timezone)
 
     def update(self):
         """
@@ -165,6 +185,10 @@ class Clock(six.moves.tkinter.Canvas):
 
         # 現在時刻
         now = datetime.datetime.now(self._timezone)
+
+        # 日付をセット
+        self._date.set(now)
+        self._date.configure(font=('FixedSys', int(14 * self._scale)))
 
         # 12時間表記から24時間表記へ変換する際に足す数値
         if 11 < now.hour:
@@ -215,7 +239,7 @@ class Clock(six.moves.tkinter.Canvas):
                          outline='black', width=6 * self._scale)
 
         # 30ミリ秒後にupdate関数を呼び出す
-        self._window.after(30, self.update)
+        self.master.after(30, self.update)
 
     def _set_scale(self, event):
         """
@@ -226,7 +250,7 @@ class Clock(six.moves.tkinter.Canvas):
         if event.width == event.height:
             if self._default_size is None:  # 初期サイズがセットされていないとき、初期サイズとメインウィンドウの最小サイズをセットする
                 self._default_size = event.width
-                self._window.minsize(self._window.winfo_width(), self._window.winfo_height())
+                self.master.minsize(self.master.winfo_width(), self.master.winfo_height())
             else:  # 初期サイズがセットされているとき、倍率を更新する
                 self._scale = float(event.width) / self._default_size
 
