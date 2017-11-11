@@ -260,9 +260,11 @@ class Clock(six.moves.tkinter.Canvas):
             if (hour + 1) % 5:  # 現在見ている時刻が5の倍数でないとき、短めの線を描画
                 self._draw_line(hand_len_vec, axis, 0)
             else:  # 現在見ている時刻が5の倍数であるとき
+                # 時刻 (24時間表記 / 時)
+                hour24 = to_24hour_format(now.hour, hour)
+
                 # 時刻を描画
-                self._draw_number(hand_len_vec, axis,
-                                  to_24hour_format(now.hour, hour))
+                self._draw_number(hand_len_vec, axis, hour24)
 
                 # 長めの線を描画
                 self._draw_line(hand_len_vec, axis, 1)
