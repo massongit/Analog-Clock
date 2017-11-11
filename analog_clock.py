@@ -12,6 +12,19 @@ import pytz
 import six.moves
 
 
+def to_24hour_format(now_hour, hour):
+    """
+    24時間表記を返す
+    :param now_hour:現在時刻 (時)
+    :param hour:時刻 (12時間表記 / 時)
+    :return: 時刻 (24時間表記 / 時)
+    """
+    # 時刻の下駄
+    hour_padding = 12 if 11 < now_hour else 0
+
+    return hour_padding + (hour + 1) // 5
+
+
 class MainWindow(six.moves.tkinter.Tk):
     """
     メインウィンドウ
@@ -247,12 +260,9 @@ class Clock(six.moves.tkinter.Canvas):
             if (hour + 1) % 5:  # 現在見ている時刻が5の倍数でないとき、短めの線を描画
                 self._draw_line(hand_len_vec, axis, 0)
             else:  # 現在見ている時刻が5の倍数であるとき
-                # 時刻の下駄
-                hour_padding = 12 if 11 < now.hour else 0
-
                 # 時刻を描画
                 self._draw_number(hand_len_vec, axis,
-                                  hour_padding + (hour + 1) // 5)
+                                  to_24hour_format(now.hour, hour))
 
                 # 長めの線を描画
                 self._draw_line(hand_len_vec, axis, 1)
