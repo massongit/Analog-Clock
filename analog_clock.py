@@ -247,8 +247,12 @@ class Clock(six.moves.tkinter.Canvas):
             if (hour + 1) % 5:  # 現在見ている時刻が5の倍数でないとき、短めの線を描画
                 self._draw_line(hand_len_vec, axis, 0)
             else:  # 現在見ている時刻が5の倍数であるとき
+                # 時刻の下駄
+                hour_padding = 12 if 11 < now.hour else 0
+
                 # 時刻を描画
-                self._draw_number(hand_len_vec, axis, now.hour, hour)
+                self._draw_number(hand_len_vec, axis,
+                                  hour_padding + (hour + 1) // 5)
 
                 # 長めの線を描画
                 self._draw_line(hand_len_vec, axis, 1)
@@ -266,20 +270,16 @@ class Clock(six.moves.tkinter.Canvas):
                          axis[1] + hand_len_vec[1],
                          fill='black', width=2 * (kind + 1) * self._scale)
 
-    def _draw_number(self, hand_len_vec, axis, now_hour, hour):
+    def _draw_number(self, hand_len_vec, axis, hour):
         """
         時刻を描画する
         :param hand_len_vec: 針の長さ (ベクトル)
         :param axis: 針の中心座標
-        :param now_hour: 現在時刻 (時)
-        :param hour: 時刻
+        :param hour: 時刻 (時)
         """
-        # 時刻の下駄
-        hour_padding = 12 if 11 < now_hour else 0
-
         self.create_text(axis[0] - 0.6 * hand_len_vec[0],
                          axis[1] + 0.6 * hand_len_vec[1],
-                         text=hour_padding + (hour + 1) // 5, font=('FixedSys', int(16 * self._scale)))
+                         text=hour, font=('FixedSys', int(16 * self._scale)))
 
     def _draw_hand(self, hand_len, axis, now):
         """
