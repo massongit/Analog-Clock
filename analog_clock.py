@@ -9,7 +9,7 @@ import datetime
 import math
 
 import pytz
-import six
+import six.moves
 
 
 class MainWindow(six.moves.tkinter.Tk):
@@ -17,8 +17,9 @@ class MainWindow(six.moves.tkinter.Tk):
     メインウィンドウ
     """
 
-    def __init__(self, screenName=None, baseName=None, className='Tk', useTk=1, sync=0, use=None):
-        six.moves.tkinter.Tk.__init__(self, screenName, baseName, className, useTk, sync, use)
+    def __init__(self, screen_name=None, base_name=None, class_name='Tk', use_tk=1, sync=0, use=None):
+        six.moves.tkinter.Tk.__init__(self, screen_name, base_name,
+                                      class_name, use_tk, sync, use)
 
         # ヘッダーフレーム
         self._header = six.moves.tkinter.Frame(self)
@@ -59,8 +60,11 @@ class MainWindow(six.moves.tkinter.Tk):
         # キャンパスサイズ (縦横共通)
         clock_size = min(self._clock.winfo_width(), self._clock.winfo_height())
 
+        # 実際の高さ
+        height = clock_size + self._header.winfo_height()
+
         # ウィンドウサイズを調整
-        self.geometry('{}x{}'.format(clock_size, clock_size + self._header.winfo_height()))
+        self.geometry('{}x{}'.format(clock_size, height))
 
 
 class TimeZone:
@@ -70,8 +74,11 @@ class TimeZone:
 
     def __init__(self):
         # タイムゾーンリスト
+        self._timezones = list()
+
         with codecs.open('timezone.txt', 'r') as timezone_file:
-            self._timezones = [pytz.timezone(timezone.strip()) for timezone in timezone_file]
+            for timezone in timezone_file:
+                self._timezones.append(pytz.timezone(timezone.strip()))
 
         # 現在のタイムゾーン
         self._n = 0
@@ -131,7 +138,8 @@ class DateLabel(six.moves.tkinter.Label):
         日付をセット
         :param now: 今日の日付 (datetime)
         """
-        self.configure(text='{} ({})'.format(now.strftime('%Y年%m月%d日'), self._weekdays[now.weekday()]))
+        self.configure(text=now.strftime('%Y年%m月%d日')
+                       + ' ({})'.format(self._weekdays[now.weekday()]))
 
 
 class Clock(six.moves.tkinter.Canvas):
@@ -181,7 +189,7 @@ class Clock(six.moves.tkinter.Canvas):
         axis = [self.winfo_width() / 2, self.winfo_height() / 2]
 
         # 針の長さ
-        hand_length = self._margin - axis[1]
+        hand_len = self._margin - axis[1]
 
         # 現在時刻
         now = datetime.datetime.now(self._timezone)
@@ -197,27 +205,34 @@ class Clock(six.moves.tkinter.Canvas):
             hour_padding = 0
 
         # キャンパスを初期化
-        self.create_rectangle(0, 0, self.winfo_width(), self.winfo_height(), fill='white')
+        self.create_rectangle(0, 0, self.winfo_width(),
+                              self.winfo_height(), fill='white')
 
         # プレート部を描画
-        for i in range(60):
+        for i in six.moves.xrange(60):
             # 現在見ている時刻の角度 (ラジアン)
             radian = (i + 1) * math.pi / 30
 
+            # x軸における針の長さ
+            hand_len_x = hand_len * math.sin(radian)
+
+            # y軸における針の長さ
+            hand_len_y = hand_len * math.cos(radian)
+
             if (i + 1) % 5:  # 現在見ている時刻が5の倍数でないとき、短めの線を描画
-                self.create_line(axis[0] - 0.875 * hand_length * math.sin(radian),
-                                 axis[1] + 0.875 * hand_length * math.cos(radian),
-                                 axis[0] - hand_length * math.sin(radian),
-                                 axis[1] + hand_length * math.cos(radian),
+                self.create_line(axis[0] - 0.875 * hand_len_x,
+                                 axis[1] + 0.875 * hand_len_y,
+                                 axis[0] - hand_len_x,
+                                 axis[1] + hand_len_y,
                                  fill='black', width=2 * self._scale)
             else:  # 現在見ている時刻が5の倍数であるとき、長めの線と数字を描画
-                self.create_text(axis[0] - 0.6 * hand_length * math.sin(radian),
-                                 axis[1] + 0.6 * hand_length * math.cos(radian),
+                self.create_text(axis[0] - 0.6 * hand_len_x,
+                                 axis[1] + 0.6 * hand_len_y,
                                  text=hour_padding + (i + 1) // 5, font=('FixedSys', int(16 * self._scale)))
-                self.create_line(axis[0] - 0.75 * hand_length * math.sin(radian),
-                                 axis[1] + 0.75 * hand_length * math.cos(radian),
-                                 axis[0] - hand_length * math.sin(radian),
-                                 axis[1] + hand_length * math.cos(radian),
+                self.create_line(axis[0] - 0.75 * hand_len_x,
+                                 axis[1] + 0.75 * hand_len_y,
+                                 axis[0] - hand_len_x,
+                                 axis[1] + hand_len_y,
                                  fill='black', width=4 * self._scale)
 
         # 針を描画
@@ -227,10 +242,13 @@ class Clock(six.moves.tkinter.Canvas):
             # 現在見ている針の角度 (ラジアン)
             radian = i * math.pi / 30
 
+            # 針の長さ (倍率調整済み)
+            scaled_hand_len = hand_len * scale
+
             # 針を描画
             self.create_line(axis[0], axis[1],
-                             axis[0] - hand_length * math.sin(radian) * scale / 2,
-                             axis[1] + hand_length * math.cos(radian) * scale / 2,
+                             axis[0] - scaled_hand_len * math.sin(radian) / 2,
+                             axis[1] + scaled_hand_len * math.cos(radian) / 2,
                              fill=color, width=2 * weight * self._scale)
 
         # 枠を描画
@@ -250,7 +268,8 @@ class Clock(six.moves.tkinter.Canvas):
         if event.width == event.height:
             if self._default_size is None:  # 初期サイズがセットされていないとき、初期サイズとメインウィンドウの最小サイズをセットする
                 self._default_size = event.width
-                self.master.minsize(self.master.winfo_width(), self.master.winfo_height())
+                self.master.minsize(self.master.winfo_width(),
+                                    self.master.winfo_height())
             else:  # 初期サイズがセットされているとき、倍率を更新する
                 self._scale = float(event.width) / self._default_size
 
