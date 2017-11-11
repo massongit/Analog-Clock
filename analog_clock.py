@@ -246,22 +246,22 @@ class Clock(six.moves.tkinter.Canvas):
             # y軸における針の長さ
             hand_len_y = hand_len * math.cos(radian)
 
-            if (i + 1) % 5:  # 現在見ている時刻が5の倍数でないとき、短めの線を描画
-                self.create_line(axis[0] - 0.875 * hand_len_x,
-                                 axis[1] + 0.875 * hand_len_y,
-                                 axis[0] - hand_len_x,
-                                 axis[1] + hand_len_y,
-                                 fill='black', width=2 * self._scale)
-            else:  # 現在見ている時刻が5の倍数であるとき、長めの線と数字を描画
+            # 現在見ている時刻が5の倍数であるとき、長めの線と数字を描画
+            if (i + 1) % 5 == 0:
                 hour_padding = 12 if 11 < now.hour else 0
                 self.create_text(axis[0] - 0.6 * hand_len_x,
                                  axis[1] + 0.6 * hand_len_y,
                                  text=hour_padding + (i + 1) // 5, font=('FixedSys', int(16 * self._scale)))
-                self.create_line(axis[0] - 0.75 * hand_len_x,
-                                 axis[1] + 0.75 * hand_len_y,
-                                 axis[0] - hand_len_x,
-                                 axis[1] + hand_len_y,
-                                 fill='black', width=4 * self._scale)
+
+            # 線の種類
+            kind = 0 if (i + 1) % 5 else 1
+
+            # 線を描画
+            self.create_line(axis[0] - (0.875 - 0.125 * kind) * hand_len_x,
+                             axis[1] + (0.875 - 0.125 * kind) * hand_len_y,
+                             axis[0] - hand_len_x,
+                             axis[1] + hand_len_y,
+                             fill='black', width=2 * (kind + 1) * self._scale)
 
     def _draw_hand(self, hand_len, axis, now):
         """
