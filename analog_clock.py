@@ -17,9 +17,8 @@ class MainWindow(six.moves.tkinter.Tk):
     メインウィンドウ
     """
 
-    def __init__(self, screen_name=None, base_name=None, class_name='Tk', use_tk=1, sync=0, use=None):
-        six.moves.tkinter.Tk.__init__(self, screen_name, base_name,
-                                      class_name, use_tk, sync, use)
+    def __init__(self, *args, **kwargs):
+        six.moves.tkinter.Tk.__init__(self, *args, **kwargs)
 
         # ヘッダーフレーム
         self._header = six.moves.tkinter.Frame(self)
@@ -198,58 +197,15 @@ class Clock(six.moves.tkinter.Canvas):
         self._date.set(now)
         self._date.configure(font=('FixedSys', int(14 * self._scale)))
 
-        # 12時間表記から24時間表記へ変換する際に足す数値
-        if 11 < now.hour:
-            hour_padding = 12
-        else:
-            hour_padding = 0
-
         # キャンパスを初期化
         self.create_rectangle(0, 0, self.winfo_width(),
                               self.winfo_height(), fill='white')
 
         # プレート部を描画
-        for i in six.moves.xrange(60):
-            # 現在見ている時刻の角度 (ラジアン)
-            radian = (i + 1) * math.pi / 30
-
-            # x軸における針の長さ
-            hand_len_x = hand_len * math.sin(radian)
-
-            # y軸における針の長さ
-            hand_len_y = hand_len * math.cos(radian)
-
-            if (i + 1) % 5:  # 現在見ている時刻が5の倍数でないとき、短めの線を描画
-                self.create_line(axis[0] - 0.875 * hand_len_x,
-                                 axis[1] + 0.875 * hand_len_y,
-                                 axis[0] - hand_len_x,
-                                 axis[1] + hand_len_y,
-                                 fill='black', width=2 * self._scale)
-            else:  # 現在見ている時刻が5の倍数であるとき、長めの線と数字を描画
-                self.create_text(axis[0] - 0.6 * hand_len_x,
-                                 axis[1] + 0.6 * hand_len_y,
-                                 text=hour_padding + (i + 1) // 5, font=('FixedSys', int(16 * self._scale)))
-                self.create_line(axis[0] - 0.75 * hand_len_x,
-                                 axis[1] + 0.75 * hand_len_y,
-                                 axis[0] - hand_len_x,
-                                 axis[1] + hand_len_y,
-                                 fill='black', width=4 * self._scale)
+        self._draw_plate(hand_len, axis, now)
 
         # 針を描画
-        for i, scale, color, weight in [[now.minute, 2, 'green', 2],
-                                        [now.second, 2, 'red', 1],
-                                        [5 * now.hour, 1, 'blue', 2]]:
-            # 現在見ている針の角度 (ラジアン)
-            radian = i * math.pi / 30
-
-            # 針の長さ (倍率調整済み)
-            scaled_hand_len = hand_len * scale
-
-            # 針を描画
-            self.create_line(axis[0], axis[1],
-                             axis[0] - scaled_hand_len * math.sin(radian) / 2,
-                             axis[1] + scaled_hand_len * math.cos(radian) / 2,
-                             fill=color, width=2 * weight * self._scale)
+        self._draw_hand(hand_len, axis, now)
 
         # 枠を描画
         self.create_oval(self._margin, self._margin,
@@ -272,6 +228,62 @@ class Clock(six.moves.tkinter.Canvas):
                                     self.master.winfo_height())
             else:  # 初期サイズがセットされているとき、倍率を更新する
                 self._scale = float(event.width) / self._default_size
+
+    def _draw_plate(self, hand_len, axis, now):
+        """
+        プレート部を描画する
+        :param hand_len: 針の長さ
+        :param axis: 針の中心座標
+        :param now: 現在時刻
+        """
+        for i in six.moves.xrange(60):
+            # 現在見ている時刻の角度 (ラジアン)
+            radian = (i + 1) * math.pi / 30
+
+            # x軸における針の長さ
+            hand_len_x = hand_len * math.sin(radian)
+
+            # y軸における針の長さ
+            hand_len_y = hand_len * math.cos(radian)
+
+            if (i + 1) % 5:  # 現在見ている時刻が5の倍数でないとき、短めの線を描画
+                self.create_line(axis[0] - 0.875 * hand_len_x,
+                                 axis[1] + 0.875 * hand_len_y,
+                                 axis[0] - hand_len_x,
+                                 axis[1] + hand_len_y,
+                                 fill='black', width=2 * self._scale)
+            else:  # 現在見ている時刻が5の倍数であるとき、長めの線と数字を描画
+                hour_padding = 12 if 11 < now.hour else 0
+                self.create_text(axis[0] - 0.6 * hand_len_x,
+                                 axis[1] + 0.6 * hand_len_y,
+                                 text=hour_padding + (i + 1) // 5, font=('FixedSys', int(16 * self._scale)))
+                self.create_line(axis[0] - 0.75 * hand_len_x,
+                                 axis[1] + 0.75 * hand_len_y,
+                                 axis[0] - hand_len_x,
+                                 axis[1] + hand_len_y,
+                                 fill='black', width=4 * self._scale)
+
+    def _draw_hand(self, hand_len, axis, now):
+        """
+        針を描画する
+        :param hand_len: 針の長さ
+        :param axis: 針の中心座標
+        :param now: 現在時刻
+        """
+        for i, scale, color, weight in [[now.minute, 2, 'green', 2],
+                                        [now.second, 2, 'red', 1],
+                                        [5 * now.hour, 1, 'blue', 2]]:
+            # 現在見ている針の角度 (ラジアン)
+            radian = i * math.pi / 30
+
+            # 針の長さ (倍率調整済み)
+            scaled_hand_len = hand_len * scale
+
+            # 針を描画
+            self.create_line(axis[0], axis[1],
+                             axis[0] - scaled_hand_len * math.sin(radian) / 2,
+                             axis[1] + scaled_hand_len * math.cos(radian) / 2,
+                             fill=color, width=2 * weight * self._scale)
 
 
 # メイン処理
