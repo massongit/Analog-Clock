@@ -5,8 +5,7 @@
 PythonのTkinterによるアナログ時計です。
 
 ## 開発環境
-* Python 2.7.12
-* Python 3.5.2
+* Python 3.7
 
 ## 機能
 * タイムゾーンの切り替え
