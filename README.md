@@ -21,7 +21,7 @@ $ sudo apt install tk-dev
 2. 以下のコマンドを実行し、必要なライブラリをインストールします。
 
 ```bash
-$ pip install -r requirement.txt
+$ pipenv install
 ```
 
 ## ファイル構成
