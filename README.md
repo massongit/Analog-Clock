@@ -1,5 +1,5 @@
 # Analog-Clock
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE) [![Maintainability](https://api.codeclimate.com/v1/badges/dfad59652e59c0009ff4/maintainability)](https://codeclimate.com/github/massongit/Analog-Clock/maintainability)
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE) [![Maintainability](https://api.codeclimate.com/v1/badges/dfad59652e59c0009ff4/maintainability)](https://codeclimate.com/github/massongit/Analog-Clock/maintainability) [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=massongit/Analog-Clock)](https://dependabot.com)
 
 ## 概要
 PythonのTkinterによるアナログ時計です。
